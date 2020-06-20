@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -30,27 +30,30 @@ public class TileManager : MonoBehaviour
         {
             // save the camera as public field if you using not the main camera
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            // get the collision point of the ray with the z = 0 plane
-            Vector3 worldPoint = ray.GetPoint(-ray.origin.y / ray.direction.y);
-            Vector3 gridLocation = ToGridPos(worldPoint);
 
-            int x = Mathf.RoundToInt(gridLocation.x) / 10, y = Mathf.RoundToInt(gridLocation.z) / 10;
-            Debug.Log("ROAD x "+ x+" y " + y);
-            if (CanBePlaced(x, y, TileId.ROAD))
+            // get the collision point of the ray with the z = 0 plane
+            if (Physics.Raycast(ray, out RaycastHit hitPoint, 1000f))
             {
-                SetTile(x, y, TileId.ROAD);
-                Instantiate(roadPrefab, gridLocation, Quaternion.identity);
-            } else
-            {
-                Debug.Log("ROAD cannot be placed");
+                Vector3 gridLocation = ToGridPos(hitPoint.point);
+
+                int x = Mathf.RoundToInt(gridLocation.x) / gridSize, y = Mathf.RoundToInt(gridLocation.z) / gridSize;
+                Debug.Log("ROAD x " + x + " y " + y);
+                if (CanBePlaced(x, y, TileId.ROAD))
+                {
+                    SetTile(x, y, TileId.ROAD);
+                    Instantiate(roadPrefab, gridLocation, Quaternion.identity);
+                }
+                else
+                {
+                    Debug.Log("ROAD cannot be placed");
+                }
             }
-            
         }
     }
 
     public Vector3 ToGridPos(Vector3 originalPos)
     {
-        return new Vector3(Mathf.Floor(originalPos.x / gridSize) * gridSize, 0.02f, Mathf.Floor(originalPos.z / gridSize) * gridSize);
+        return new Vector3(Mathf.Round(originalPos.x / gridSize) * gridSize, 0.02f, Mathf.Round(originalPos.z / gridSize) * gridSize);
     }
     
     public Vector2Int VectorToTile(Vector3 originalPos)
@@ -117,21 +120,10 @@ public class TileManager : MonoBehaviour
     {
         if (Instance != null)
         {
-            Debug.LogError("More than one TileManager instance!" );
+            Debug.LogError("More than one TileManager instance!");
             Destroy(this);
             return;
         }
         Instance = this;
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }
