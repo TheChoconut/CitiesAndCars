@@ -58,6 +58,11 @@ public class TileManager : MonoBehaviour
         return new Vector2Int(Mathf.FloorToInt(originalPos.x / gridSize), Mathf.FloorToInt(originalPos.z / gridSize));
     }
 
+    public Vector3 TileToCenterWorld(Vector2Int originalPos)
+    {
+        return new Vector3(originalPos.x * gridSize, 1f, originalPos.y * gridSize);
+    }
+
     public void SetTile(int x, int y, TileId newTile)
     {
         tile[x + 50, y + 50] = newTile;
@@ -69,10 +74,11 @@ public class TileManager : MonoBehaviour
             return false; 
 
 
+        /*
         if (tile == TileId.ROAD)
         {
             return GetTile(x + 1, y + 1) != TileId.ROAD && GetTile(x - 1, y - 1) != TileId.ROAD && GetTile(x - 1, y + 1) != TileId.ROAD && GetTile(x + 1, y - 1) != TileId.ROAD;
-        }
+        }*/
 
         return true;
     }
