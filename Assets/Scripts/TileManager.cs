@@ -68,7 +68,7 @@ public class TileManager : MonoBehaviour
 
     public void SetTile(int x, int y, TileId newTile)
     {
-        tile[x + 50, y + 50] = newTile;
+        tile[x + 25, y + 25] = newTile;
     }
 
     public bool CanBePlaced(int x, int y, TileId tile)
@@ -90,18 +90,35 @@ public class TileManager : MonoBehaviour
 
     public TileId GetTile(int x,int y)
     {
-        if (x + 50 >= 100 || y + 50 >= 100 || x < -50 || y < -50)
+        if (x + 25 >= 100 || y + 25 >= 100 || x < -25 || y < -25)
             return TileId.EMPTY;
 
-        return tile[x + 50, y + 50];
+        return tile[x + 25, y + 25];
     }
 
     public TileId GetTile(Vector2Int pos)
     {
-        if (pos.x + 50 >= 100 || pos.y + 50 >= 100 || pos.x < -50 || pos.y < -50)
-            return TileId.EMPTY;
+        return GetTile(pos.x, pos.y);
+    }
 
-        return tile[pos.x + 50, pos.y + 50];
+    public bool IsBranchingTile(int curX, int curY, int tileX, int tileY)
+    {
+        return GetAdjacentTiles(curX, curY, tileX, tileY).Count > 1;
+    }
+
+    public List<Vector2Int> GetAdjacentTiles(int curX, int curY, int tileX, int tileY)
+    {
+        List<Vector2Int> availableTiles = new List<Vector2Int>();
+        Vector2Int[] direction = new Vector2Int[4] { new Vector2Int(-1, 0), new Vector2Int(1, 0), new Vector2Int(0, -1), new Vector2Int(0, 1) };
+
+        for (int i = 0; i < 4; i++)
+        {
+            Vector2Int newPos = new Vector2Int(tileX + direction[i].x, tileY + direction[i].y);
+            if (GetTile(newPos) == TileId.ROAD && !(newPos.x == curX && newPos.y == curY))
+                availableTiles.Add(newPos);
+        }
+
+        return availableTiles;
     }
 
     private void OnDrawGizmosSelected()
@@ -109,13 +126,24 @@ public class TileManager : MonoBehaviour
         if (gridSize <= 8)
             gridSize = 8;
 
-        Gizmos.color = Color.yellow;
-        for (int x = -250; x <= 250; x+= gridSize)
+        for (int x = -25; x <= 25; x++)
         {
-            for (int y = -250; y <= 250; y += gridSize*5)
+            for (int y = -25; y <= 25; y += 2)
             {
-                Gizmos.DrawWireCube(new Vector3(x, 0.02f, y), new Vector3(gridSize, 1, gridSize));
-                Gizmos.DrawWireCube(new Vector3(y, 0.02f, x), new Vector3(gridSize, 1, gridSize));
+                if (CarTrafficManager.Instance.GetCarIndex(x, y) != 0)
+                {
+                    Gizmos.color = Color.red;
+                } else
+                {
+                    Gizmos.color = Color.yellow;
+                }
+                Gizmos.DrawWireCube(new Vector3(x * gridSize, 0.02f, y * gridSize), new Vector3(gridSize, 1, gridSize));
+                if (CarTrafficManager.Instance.GetCarIndex(y, x) != 0)
+                    Gizmos.color = Color.red;
+                else
+                    Gizmos.color = Color.yellow;
+                
+                Gizmos.DrawWireCube(new Vector3(y * gridSize, 0.02f, x * gridSize), new Vector3(gridSize, 1, gridSize));
             }
         }
         

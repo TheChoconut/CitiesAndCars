@@ -4,29 +4,85 @@ using UnityEngine;
 
 public class CarController : MonoBehaviour
 {
-    // Start is called before the first frame update
-    private Rigidbody rigidbody;
+    private float rotationRadius = 8f;
+    private Vector2Int lastTilePosition = new Vector2Int(-250,-250);
 
-    private float rotationRadius = 10f;
-    public Vector2Int lastTilePosition = new Vector2Int(-250,-250);
+    public float speed = 5f;
 
-    void Awake()
-    {
-        rigidbody = GetComponent<Rigidbody>();
-        InvokeRepeating("NewPosition", 0f, 0.25f);
-    }
+    [SerializeField]
+    private int carIndex = -1;
 
+    private Vector3 nextTileWorldPosition;
+    private Vector3 branchPosition, lastPosition;
+    private bool shouldRotateToPoint = false;
+     
     void Start()
     {
-
+        Vector2Int currentTilePosition = TileManager.Instance.VectorToTile(transform.position);
+        carIndex = CarTrafficManager.Instance.RegisterCar(currentTilePosition.x, currentTilePosition.y);
+        NewPosition();
     }
 
     void Update()
     {
-        float progress = Time.time % (90 * Mathf.Deg2Rad) / (90 * Mathf.Deg2Rad);
+        Vector2Int currentTilePosition = TileManager.Instance.VectorToTile(transform.position);
+        Vector2Int nextTilePos = TileManager.Instance.VectorToTile(nextTileWorldPosition);
 
-        //transform.position = new Vector3((float)Math.Cos(Time.time % (90 * Mathf.Deg2Rad)) * rotationRadius, transform.position.y, (float)Math.Sin(Time.time % (90 * Mathf.Deg2Rad)) * rotationRadius);
-        //transform.eulerAngles = new Vector3(transform.eulerAngles.x, 90 - progress * 90, transform.eulerAngles.z);
+        
+        
+        if (transform.position.x == nextTileWorldPosition.x && transform.position.z == nextTileWorldPosition.z)
+        {
+            branchPosition = new Vector3(-250, -250, -250);
+            lastPosition = new Vector3(-250, -250, -250);
+            NewPosition();
+            
+        } else if (CarTrafficManager.Instance.GetCarIndex(nextTilePos) == carIndex || CarTrafficManager.Instance.GetCarIndex(nextTilePos) == 0)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, nextTileWorldPosition, speed * Time.deltaTime);
+        } else
+        {
+            var nextTilePosition = TileManager.Instance.VectorToTile(nextTileWorldPosition);
+            nextTileWorldPosition = TileManager.Instance.TileToCenterWorld(lastTilePosition);
+            lastTilePosition = nextTilePosition;
+        }
+
+        if (shouldRotateToPoint)
+        {
+            if (lastPosition.x == -250)
+            {
+                lastPosition = transform.position;
+            }
+
+            // lastPosition = position of start piece
+            // branchPosition = position of intersection piece
+            // nextTileWorldPosition = position of end piece
+        }
+        CarTrafficManager.Instance.UpdateCarPosition(carIndex, currentTilePosition);
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireCube(TileManager.Instance.ToGridPos(transform.position), new Vector3(10, 10, 10));
+        Gizmos.DrawWireSphere(nextTileWorldPosition, .5f);
+
+        if (lastPosition.x != -250)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(lastPosition, .5f);
+        }
+
+        Vector2Int nextTilePos = TileManager.Instance.VectorToTile(nextTileWorldPosition);
+        if (CarTrafficManager.Instance.GetCarIndex(nextTilePos) == carIndex || CarTrafficManager.Instance.GetCarIndex(nextTilePos) == 0)
+        {
+            Gizmos.color = Color.green;
+        } else
+        {
+            Gizmos.color = Color.red;
+        }
+
+        Gizmos.DrawLine(transform.position, nextTileWorldPosition);
+
     }
 
     // Update is called once per frame
@@ -47,19 +103,28 @@ public class CarController : MonoBehaviour
         }
 
         Vector3 tileCenter = transform.position;
-        Debug.Log(availableTiles.Count);
         if (availableTiles.Count >= 1)
         {
             Vector2Int newTilePosition = availableTiles[UnityEngine.Random.Range(0, availableTiles.Count)];
-            tileCenter = TileManager.Instance.TileToCenterWorld(newTilePosition);
+            List<Vector2Int> branchPaths = TileManager.Instance.GetAdjacentTiles(x, y, newTilePosition.x, newTilePosition.y);
+            if (branchPaths.Count > 1)
+            {
+                // TEMP: Go to this random tile instead.
+                shouldRotateToPoint = true;
+                branchPosition = TileManager.Instance.TileToCenterWorld(newTilePosition);
+                newTilePosition = branchPaths[UnityEngine.Random.Range(0, branchPaths.Count)];
+            }
+                tileCenter = TileManager.Instance.TileToCenterWorld(newTilePosition);
         } else if (lastTilePosition.x > -240 && lastTilePosition.y > -240)
         {
             tileCenter = TileManager.Instance.TileToCenterWorld(lastTilePosition);
         } else
         {
             // car is stuck
+            Debug.Log("Car is stuck");
         }
         lastTilePosition = tilePosition;
-        transform.position = tileCenter;
+        nextTileWorldPosition = tileCenter;
+        Debug.Log(tileCenter);
     }
 }
