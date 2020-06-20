@@ -47,12 +47,12 @@ public class CarController : MonoBehaviour
         }
 
         Vector3 tileCenter = transform.position;
-
+        Debug.Log(availableTiles.Count);
         if (availableTiles.Count >= 1)
         {
             Vector2Int newTilePosition = availableTiles[UnityEngine.Random.Range(0, availableTiles.Count)];
             tileCenter = TileManager.Instance.TileToCenterWorld(newTilePosition);
-        } else if (lastTilePosition.x > -250 && lastTilePosition.y > -250)
+        } else if (lastTilePosition.x > -240 && lastTilePosition.y > -240)
         {
             tileCenter = TileManager.Instance.TileToCenterWorld(lastTilePosition);
         } else

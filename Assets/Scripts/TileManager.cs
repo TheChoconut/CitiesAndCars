@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -74,20 +74,25 @@ public class TileManager : MonoBehaviour
     public bool CanBePlaced(int x, int y, TileId tile)
     {
         if (GetTile(x, y) != TileId.EMPTY)
-            return false; 
+            return false;
 
-
-        /*
-        if (tile == TileId.ROAD)
-        {
-            return GetTile(x + 1, y + 1) != TileId.ROAD && GetTile(x - 1, y - 1) != TileId.ROAD && GetTile(x - 1, y + 1) != TileId.ROAD && GetTile(x + 1, y - 1) != TileId.ROAD;
-        }*/
+        if (GetTile(x + 1, y + 1) == TileId.ROAD && GetTile(x, y + 1) == TileId.ROAD && GetTile(x + 1, y) == TileId.ROAD)
+            return false;
+        if (GetTile(x - 1, y - 1) == TileId.ROAD && GetTile(x - 1, y) == TileId.ROAD && GetTile(x, y - 1) == TileId.ROAD)
+            return false;
+        if (GetTile(x + 1, y - 1) == TileId.ROAD && GetTile(x, y - 1) == TileId.ROAD && GetTile(x + 1, y) == TileId.ROAD)
+            return false;
+        if (GetTile(x - 1, y + 1) == TileId.ROAD && GetTile(x - 1, y) == TileId.ROAD && GetTile(x, y + 1) == TileId.ROAD)
+            return false;
 
         return true;
     }
 
     public TileId GetTile(int x,int y)
     {
+        if (x + 50 >= 100 || y + 50 >= 100 || x < -50 || y < -50)
+            return TileId.EMPTY;
+
         return tile[x + 50, y + 50];
     }
 
